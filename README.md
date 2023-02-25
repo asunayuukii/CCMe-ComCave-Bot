@@ -2,6 +2,8 @@
 [German Only] Ein Programm für den ComCave Launcher der die Anwesenheitskontrolle löst.
 Dieser Arbeitet mit OCR um den Text auszulesen und Imagesearch um die Eingabe auf das Tastenfeld zu ermöglichen.
 
+Achtung. Programm ist nicht bug frei.
+
 Funktionsweise des Programm:
 1. Wartet auf das Fenster "Anwesenheitskontrolle"
 2. Überprüft ob sich die Maus bewegt in 5 Sekunden um festzustellen ob ein Anwender aktiv den PC verwendet.
