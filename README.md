@@ -18,6 +18,8 @@ Funktionsweise des Programm:
 
 Exe ausführen und rechte maustaste auf das Symbol im Tray. Dort dann Start oder Exit wählen.
 
+![Start Hilfe](https://i.ibb.co/Tr4tjJs/Screenshot-2.png)
+
 Verwendete Libary:
 
 OCR von DanysysTeam - https://github.com/DanysysTeam/UWPOCR
