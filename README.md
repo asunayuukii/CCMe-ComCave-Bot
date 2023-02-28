@@ -19,5 +19,7 @@ Funktionsweise des Programm:
 Exe ausführen und rechte maustaste auf das Symbol im Tray. Dort dann Start oder Exit wählen.
 
 Verwendete Libary:
+
 OCR von DanysysTeam - https://github.com/DanysysTeam/UWPOCR
+
 Imagesearch von Dao Van Trong - TRONG.LIVE - https://www.autoitscript.com/forum/files/file/471-image-search-udf/
