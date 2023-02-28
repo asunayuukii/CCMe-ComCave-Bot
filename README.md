@@ -1,4 +1,4 @@
-# AntiComCaveLauncher
+# CCMe-ComCave-Bot 
 [German Only] Ein Programm für den ComCave Launcher der die Anwesenheitskontrolle löst.
 Dieser Arbeitet mit OCR um den Text auszulesen und Imagesearch um die Eingabe auf das Tastenfeld zu ermöglichen.
 
