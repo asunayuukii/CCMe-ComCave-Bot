@@ -9,12 +9,13 @@
 #ce ----------------------------------------------------------------------------
 
 ; Script Start - Add your code below here
- #include <UWPOCR.au3>
- #include <ScreenCapture.au3>
- #include <File.au3>
- #include <GDIPlus.au3>
- #include <MsgBoxConstants.au3>
- #include <_ImageSearch_UDF.au3>
+#include <Array.au3>
+#include <UWPOCR.au3>
+#include <ScreenCapture.au3>
+#include <File.au3>
+#include <GDIPlus.au3>
+#include <MsgBoxConstants.au3>
+#include <_ImageSearch_UDF.au3>
  
 opt("TrayAutoPause",0)
 opt("TrayMenuMode",3)
@@ -24,6 +25,7 @@ OnAutoItExitRegister("_Exit")
  
 $tr_opt = TrayCreateItem("Start")
 $TE_opt = TrayItemSetOnEvent($tr_opt, "_opt")
+
 $tEXIT = TrayCreateItem("Exit")
 $TE_EXIT = TrayItemSetOnEvent($tEXIT, "_Exit")
 
@@ -37,7 +39,7 @@ EndFunc
 Func _Exit()
 	$runtime = False
 	Sleep(1500)
-	;_ClearTemp(1)
+	_ClearTemp(@WorkingDir & "\temp\")
 	Exit(0)
 EndFunc
 
@@ -51,19 +53,20 @@ Func _opt()
 	EndIf
 EndFunc
 
-Func _ClearTemp($c)
-	If FileExists(@WorkingDir & "\temp.png") Then
-		$t = FileDelete(@WorkingDir & "\temp.png")
-		If $t==0 And $c==0 Then
-			MsgBox(0, "ERROR", "Löschen nicht erfolgreich")
+Func _ClearTemp($path)
+	$files = _FileListToArray($path, "*.png", 1, False)
+	for $i = 1 to UBound($files) -1
+		If FileExists($path & $files[$i]) Then
+			FileDelete($path & $files[$i])
 		EndIf
-	EndIf
+	Next
 EndFunc
 
 Func _GetHWND($hwndname)
 	$hwnd = WinGetHandle($hwndname)
 	If @error Then
 		$hwnd = False
+		Return $hwnd
 	EndIf
 	WinActivate($hwnd)
 	Return $hwnd
@@ -106,22 +109,38 @@ EndFunc
 
 Func _Run($hwndname)
 	If $runtime Then
-		;_ClearTemp(1)
-		WinWait($hwndname, "",1000)
+		WinWait($hwndname)
+		
+		If $runtime == False Then
+			Return -1
+		EndIf
+		
 		$ac = _AwayCheck()
 		
+		$i = 0
 		While $ac == False
 			$ac = _AwayCheck()
+			$i += 1
+			If $i >= 2 Then
+				$a = MsgBox(4, "CCMe", "Nutzer Bewegung erkannt." & @CRLF & "Möchtest du die Eingabe selbst vornehmen?", 60)
+				If($a == 6)Then
+					Sleep(60000)
+					Return -1
+				Else
+					Sleep(1000)
+					$ac == True
+				EndIf
+			EndIf
 		WEnd
 		
 		$hwnd = _GetHWND($hwndname)
 		
 		If $hwnd == False Then
-			MsgBox(0, "CCMe", "ERROR - Fenster wurde gefunden und wurde wieder verloren." & @CRLF & "Nach 60 Sekunden geht es weiter.", 60)
+			MsgBox(0, "CCMe", "ERROR - Fenster wurde gefunden und wurde wieder verloren." & @CRLF & "Fenster schließt nach 60 Sekunden und dann geht es weiter.", 60)
 			Return -1
 		EndIf
 		
-		$fpath = @WorkingDir & "/temp/temp"
+		$fpath = @WorkingDir & "\temp\temp"
 		$i = 0
 		If FileExists($fpath & $i & ".png") Then
 			$file = FileExists($fpath & $i & ".png")
@@ -135,7 +154,7 @@ Func _Run($hwndname)
 		$gss = _GetScreenShot($hwnd, $fname)
 		
 		If $gss == False Then
-			MsgBox(0, "CCMe", "ERROR - Screenshot konnte nicht erstellt werden." & @CRLF & "Nach 60 Sekunden geht es weiter.", 60)
+			MsgBox(0, "CCMe", "ERROR - Screenshot konnte nicht erstellt werden." & @CRLF & "Fenster schließt nach 60 Sekunden und dann geht es weiter.", 60)
 			Return -1
 		EndIf
 		
@@ -148,43 +167,33 @@ Func _Run($hwndname)
 		EndIf
 		
 		If StringLen($numbers) < 4 Then
-			MsgBox(0, "CCMe", "ERROR - Pin konnte nicht gelesen werden." & @CRLF & "Nach 60 Sekunden geht es weiter.", 60)
+			MsgBox(0, "CCMe", "ERROR - Pin konnte nicht gelesen werden." & @CRLF & "Fenster schließt nach 60 Sekunden und dann geht es weiter.", 60)
 			Return -1
 		EndIf
 			
-		$founddigits = 0
 		$splitnumbers = StringSplit($numbers, "",2)
-		For $b In $splitnumbers
-			$f = _Find($b, $hwnd)
-			If $f[0] == 1 Then
-				$founddigits += 1
-			EndIf
-		Next
-		$f = _Find(-1, $hwnd)
 		
-		MsgBox(0,"",$numbers & @CRLF & $founddigits)
+		$first = _Find($splitnumbers[0], $hwnd)
+		$second = _Find($splitnumbers[1], $hwnd)
+		$third = _Find($splitnumbers[2], $hwnd)
+		$fourth = _Find($splitnumbers[3], $hwnd)
 		
-		If Not $f[0] == 1 Or Not $founddigits == 4 Then
-			MsgBox(0, "CCMe", "ERROR - Zahlenfeld konnte nicht gelesen werden." & @CRLF & "Nach 60 Sekunden geht es weiter.", 60)
+		$send = _Find(-1, $hwnd)
+		
+		If $send[0] == 0 Or $first[0] == 0 Or $second[0] == 0 Or $third[0] == 0 Or $fourth[0] == 0 Then
+			MsgBox(0, "CCMe", "ERROR - Zahlenfeld konnte nicht gelesen werden." & @CRLF & "Fenster schließt nach 60 Sekunden und dann geht es weiter.", 60)
 			Return -1
 		EndIf
 		
-		$send = _Find(-1, $hwnd)
-		$f = Null
-		$l = WinGetPos($hwnd)
-		
-		For $b In $splitnumbers
-			$f = _Find($b, $hwnd)
-			If $f[0] == 1 Then
-				MouseClick($MOUSE_CLICK_LEFT, Random(-3, 3,1) + $f[1], Random(-3, 3,1) + $f[2], 1,Random(20,40,1))
-				Sleep(Random(800,1200,1))
-				MouseMove(Random(-3, 3,1) + $l[0], Random(-3, 3,1) + $l[1],Random(20,40,1))
-				Sleep(Random(3000,4500,1))
-			EndIf
-		Next
-		
+		MouseClick($MOUSE_CLICK_LEFT, Random(-3, 3,1) + $first[1], Random(-3, 3,1) + $first[2], 1,Random(20,40,1))
+		Sleep(Random(800,1200,1))
+		MouseClick($MOUSE_CLICK_LEFT, Random(-3, 3,1) + $second[1], Random(-3, 3,1) + $second[2], 1,Random(20,40,1))
+		Sleep(Random(800,1200,1))
+		MouseClick($MOUSE_CLICK_LEFT, Random(-3, 3,1) + $third[1], Random(-3, 3,1) + $third[2], 1,Random(20,40,1))
+		Sleep(Random(800,1200,1))
+		MouseClick($MOUSE_CLICK_LEFT, Random(-3, 3,1) + $fourth[1], Random(-3, 3,1) + $fourth[2], 1,Random(20,40,1))
+		Sleep(Random(800,1200,1))
 		MouseClick($MOUSE_CLICK_LEFT, Random(-3, 3,1) + $send[1], Random(-3, 3,1) + $send[2], 1,Random(20,40,1))
-		
 		Sleep(Random(8000,12000,1))
 	EndIf
 	Sleep(1000)
