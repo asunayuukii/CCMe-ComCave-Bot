@@ -26,6 +26,7 @@ Einfach entpacken und die `Config.ini` editieren.
 Wenn du EvenBetterComCave verwenden möchtest musst du folgende Infos angeben.
 
 ![Config](https://i.ibb.co/k3YMfNm/Screenshot-2023-04-07-135211.png)
+
 Die Config hat folgende Einstellungen:
 
 | Name | Beschreibung |
