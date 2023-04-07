@@ -24,7 +24,9 @@ Der Bot arbeitet komplett Offline. Wenn du mir nicht traust schau dir den Code a
 **Installation:**
 Einfach entpacken und die `Config.ini` editieren.
 Wenn du EvenBetterComCave verwenden möchtest musst du folgende Infos angeben.
+
 ![Config](https://i.ibb.co/k3YMfNm/Screenshot-2023-04-07-135211.png)
+
 Die Config hat folgende Einstellungen:
 - **Autostart**: Mit Autostart musst du beim öffnen des Programms nicht mehr selbstständig den Bot starten. Standardwert ist 0 (1 gleich an / 0 gleich aus)*
 - **LP_X / LP_Y**: Dies sind die Koordinaten für das Fenster Log. Sobald das Fenster geschlossen wird, werden die alten mit den neuen werten Überschrieben. Standardwert ist für beide Werte 0 (Oberste Linke Ecke deines Setups)
