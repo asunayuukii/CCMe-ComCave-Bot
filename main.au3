@@ -108,7 +108,7 @@ EndIf
 If $autostart == 1 And $EvenBetterCCPort == 1 Then
 	_LogAdd("EvenBetterCC: Autostart von CC.")
 	If WinExists("CC Launcher 3.0") == 0 Then
-		$result = _EvenBetterCCPort()
+		$result = _EvenBetterCCPort(True)
 		If $result == -1 Or $result == 0 Then
 			_LogAdd("EvenBetterCC: Autostart von CC fehlgeschlagen.")
 		EndIf
@@ -193,7 +193,7 @@ Func _ChangeAutostart()
 	If GUICtrlRead($Checkbox1) == $GUI_CHECKED Then
 		$value = 1
 	EndIf
-	IniWrite("config.ini", "settings", "autostart", $value)
+	IniWrite("config.ini", "Settings", "autostart", $value)
 EndFunc
 
 Func _ChangeScreenshot()
@@ -202,7 +202,7 @@ Func _ChangeScreenshot()
 	If GUICtrlRead($Checkbox2) == $GUI_CHECKED Then
 		$value = 1
 	EndIf
-	IniWrite("config.ini", "settings", "screenshot", $value)
+	IniWrite("config.ini", "Settings", "screenshot", $value)
 EndFunc
 
 Func _ChangeLogOnStart()
@@ -211,7 +211,7 @@ Func _ChangeLogOnStart()
 	If GUICtrlRead($Checkbox3) == $GUI_CHECKED Then
 		$value = 1
 	EndIf
-	IniWrite("config.ini", "settings", "logopenonstart", $value)
+	IniWrite("config.ini", "Settings", "logopenonstart", $value)
 EndFunc
 
 Func _GetText($path)
@@ -228,8 +228,8 @@ Func _Exit()
 EndFunc
 
 Func _OnExit()
-	$runtime = False
-	Sleep(1500)
+	_opt(True)
+	Sleep(2100)
 	If $screenshot == "0" Then
 		_ClearTemp(@WorkingDir & "\temp\")
 	EndIf
@@ -238,20 +238,20 @@ EndFunc
 Func _Exithwnd()
 	_CheckIni()
 	$size = WinGetPos($Form1)
-	IniWrite("config.ini", "settings", "LP_X", $size[0])
-	IniWrite("config.ini", "settings", "LP_Y", $size[1])
+	IniWrite("config.ini", "Settings", "LP_X", $size[0])
+	IniWrite("config.ini", "Settings", "LP_Y", $size[1])
 	GUISetState(@SW_HIDE, $Form1)
 EndFunc
 
-Func _opt()
-	If $runtime == False Then
-		TrayItemSetText($tr_opt, "Stop")
-		GUICtrlSetData($Button1, "Stop")
-		$runtime = True
-	Else
+Func _opt($ForceOff = False)
+	If $runtime == True Or $ForceOff Then
 		TrayItemSetText($tr_opt, "Start")
 		GUICtrlSetData($Button1, "Start")
 		$runtime = False
+	Else
+		TrayItemSetText($tr_opt, "Stop")
+		GUICtrlSetData($Button1, "Stop")
+		$runtime = True
 	EndIf
 EndFunc
 
@@ -423,13 +423,17 @@ Func _LoginCC()
 	Return 1
 EndFunc
 
-Func _CCme($hwndname)
+Func _CCme($hwndname, $ByPassAC = False)
 	If $runtime == False Then
 		_LogAdd("CCme: Durch Nutzer gestoppt.")
 		Return 0
 	EndIf
 
-	$ac = _AwayCheck()
+	$ac = True
+
+	If Not ($ByPassAC) Then
+		$ac = _AwayCheck()
+	EndIf
 
 	$i = 0
 	While $ac == False
@@ -554,7 +558,7 @@ Func _CCme($hwndname)
 	Return 1
 EndFunc
 
-Func _EvenBetterCCPort()
+Func _EvenBetterCCPort($ByPassAC = False)
 	If $EvenBetterCCPort == 0 Then
 		Return 0
 	EndIf
@@ -569,7 +573,11 @@ Func _EvenBetterCCPort()
 		Return -1
 	EndIf
 
-	$ac = _AwayCheck()
+	$ac = True
+
+	If Not ($ByPassAC) Then
+		$ac = _AwayCheck()
+	EndIf
 
 	$i = 0
 	While $ac == False
