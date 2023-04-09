@@ -53,7 +53,7 @@ Opt("TrayOnEventMode", 1)
 
 Opt("GUIOnEventMode", 1)
 GUISetOnEvent($GUI_EVENT_CLOSE, "_Exithwnd")
-GUICtrlSetOnEvent($Button1, "_opt")
+GUICtrlSetOnEvent($Button1, "_Start")
 GUICtrlSetOnEvent($Checkbox1, "_ChangeAutostart")
 GUICtrlSetOnEvent($Checkbox2, "_ChangeScreenshot")
 GUICtrlSetOnEvent($Checkbox3, "_ChangeLogOnStart")
@@ -61,7 +61,7 @@ GUICtrlSetOnEvent($Checkbox3, "_ChangeLogOnStart")
 OnAutoItExitRegister("_OnExit")
 
 $tr_opt = TrayCreateItem("Start")
-$TE_opt = TrayItemSetOnEvent($tr_opt, "_opt")
+$TE_opt = TrayItemSetOnEvent($tr_opt, "_Start")
 
 $traylog = TrayCreateItem("Log")
 $event_traylog = TrayItemSetOnEvent($traylog, "_traylog")
@@ -116,6 +116,10 @@ If $autostart == 1 And $EvenBetterCCPort == 1 Then
 		_LogAdd("EvenBetterCC: Autostart nicht notwendig. CC bereits gestartet.")
 	EndIf
 EndIf
+
+Func _Start()
+	_opt()
+EndFunc
 
 Func _CheckInstall()
 	$img1 = FileExists(@WorkingDir & "\img\1.png")
@@ -318,6 +322,24 @@ Func _LogAdd($text)
 EndFunc
 
 Func _Run($hwndname)
+	If $runtime And Not (_ExistsCC() == 1) Then
+		_LogAdd("Programm: ComCave Launcher nicht gestartet. Warte auf Start...")
+
+		If $EvenBetterCCPort == 1 Then
+			$a = MsgBox(4, "CCMe", "ComCave Launcher nicht gestartet." & @CRLF & "Möchtest du den ComCave Launcher selbst starten?", 60)
+			If $a == 7 Then
+				_EvenBetterCCPort(True)
+			EndIf
+		EndIf
+
+		While(WinWait("CC Launcher 3.0", "", 2) == 0)
+			If $runtime == False Then
+				_LogAdd("Programm: Durch Nutzer gestoppt.")
+				Return 0
+			EndIf
+		WEnd
+	EndIf
+
 	If ($runtime And $CCme == "1") Or ($runtime And $force) Then
 		_LogAdd("-----------------------------------")
 		_LogAdd("CCme gestartet. Warte auf Fenster " & $hwndname & "...")
@@ -421,6 +443,20 @@ Func _LoginCC()
 	Send("{ENTER}")
 
 	Return 1
+EndFunc
+
+Func _ExistsCC()
+	$value = 0
+
+	If WinExists("Login") Then
+		$value = -1
+	EndIf
+
+	If WinExists("CC Launcher 3.0") Then
+		$value = 1
+	EndIf
+
+	Return $value
 EndFunc
 
 Func _CCme($hwndname, $ByPassAC = False)
@@ -634,6 +670,23 @@ Func _EvenBetterCCPort($ByPassAC = False)
 	If $login == 0 Then
 		_LogAdd("EvenBetterCC: Fehler beim Login von CC.")
 		Return -1
+	EndIf
+
+	_LogAdd("EvenBetterCC: CC Logindaten eingegeben...")
+	_LogAdd("EvenBetterCC: Warte auf das Fenster CC Launcher 3.0...")
+
+	WinWait("CC Launcher 3.0", "", 10)
+
+	$logincheck = _ExistsCC()
+
+	If Not ($logincheck == 1) Then
+		If $logincheck == -1 Then
+			_LogAdd("EvenBetterCC: Fehler beim Login von CC. Falsche Logindaten möglich.")
+			Return -1
+		Else
+			_LogAdd("EvenBetterCC: Fehler beim Login von CC. Fenster konnte nicht gefunden werden.")
+			Return -1
+		EndIf
 	EndIf
 
 	_LogAdd("EvenBetterCC: CC Login erfolgreich...")
