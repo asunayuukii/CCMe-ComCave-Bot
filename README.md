@@ -18,11 +18,20 @@ Somit ist der Bot 100% ausfallsicher.
 - Config.ini jetzt hast du die Kontrolle. Konfiguriere die Toleranz oder nutze nur noch EvenBetterComCave (In der Config muss der Pfad zu dem Launcher stehen und auch deine Login Daten.) 
 - Und weitere Einstellungen. Mehr Infos below
 
+**Kann Ich auch nur EvenbetterCC / CCMe nutzen?**
+
+Kurzgesagt: **Ja**. Du musst nur in der `Config.ini` die jeweilige Funktion, die du nicht verwenden möchtest, deaktivieren. Das geht wenn du den Wert, zum Beispiel, von `CCme`  auf `0` stellst.
+Das Programm versucht dennoch bei wiederholten Fehlern die andere Methoden mit zu verwenden.
+
+**Wie funktioniert die Ausfallsicherung?**
+
+Sobald der Bot 3x einen Programmfehler zählt, zum beispiel es konnten nur 3 Zahlen von der PIN eingelesen werden, dann wird mit EvenBetterComCave versucht die Anwesenheitskontrolle zu umgehen. Dies macht der Bot nur wenn EvenBetterComCave, in der `Config.ini`, aktiviert ist.
+Natürlich wird erst überprüft ob auch die Logindaten angegeben sind. Die Ausfallsicherung funktioniert auch in die andere Richtung, sprich wenn CCMe aus ist und EvenBetterComCave Fehler generiert wird die Methode CCMe erzwungen.
 
 Der Bot arbeitet komplett Offline. Wenn du mir nicht traust schau dir den Code an und kompelliere ihn selbst.
 
 **Installation:**
-Einfach entpacken und die `Config.ini` editieren.
+Einfach entpacken, die `Config.ini` editieren und Exe ausführen.
 Wenn du EvenBetterComCave verwenden möchtest musst du folgende Infos angeben.
 
 ![Config](https://i.ibb.co/k3YMfNm/Screenshot-2023-04-07-135211.png)
@@ -68,3 +77,4 @@ Verwendete Libary:
  - OCR von DanysysTeam - https://github.com/DanysysTeam/UWPOCR
  - Imagesearch von Dao Van Trong - TRONG.LIVE -
    https://www.autoitscript.com/forum/files/file/471-image-search-udf/
+
