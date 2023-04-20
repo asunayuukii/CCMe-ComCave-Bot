@@ -73,6 +73,7 @@ local $runtime = False
 local $debug = False
 local $erno = 0
 local $force = False
+local $lastHWND = _NowCalc()
 
 If _Singleton("Log", 1) == 0 Then
 	MsgBox($MB_SYSTEMMODAL, "CCme", "CCme Bereits gestartet.", 15)
@@ -351,9 +352,18 @@ Func _Run($hwndname)
 				_LogAdd("CCme: Durch Nutzer gestoppt.")
 				Return 0
 			EndIf
+
+			If _DateDiff("n", $lastHWND, _NowCalc()) >= 121 And $EvenBetterCCPort == 1 Then
+				_LogAdd("CCme: Fenster seit 2 Stunden nicht gefunden.")
+				_LogAdd("CCme: Mit EvenBetterCC wird CCLauncher neu gestartet...")
+				_EvenBetterCCPort()
+				$lastHWND = _NowCalc()
+				Return 0
+			EndIf
 		WEnd
 
 		_LogAdd("CCme: Fenster gefunden.")
+		$lastHWND = _NowCalc()
 
 		$result = _CCme($hwndname)
 
@@ -381,9 +391,18 @@ Func _Run($hwndname)
 				_LogAdd("EvenBetterCC: Durch Nutzer gestoppt.")
 				Return 0
 			EndIf
+
+			If _DateDiff("n", $lastHWND, _NowCalc()) >= 121 And $EvenBetterCCPort == 1 Then
+				_LogAdd("EvenBetterCC: Fenster seit 2 Stunden nicht gefunden.")
+				_LogAdd("EvenBetterCC: Mit EvenBetterCC wird CCLauncher neu gestartet...")
+				_EvenBetterCCPort()
+				$lastHWND = _NowCalc()
+				Return 0
+			EndIf
 		WEnd
 
 		_LogAdd("EvenBetterCC: Fenster gefunden.")
+		$lastHWND = _NowCalc()
 
 		$result = _EvenBetterCCPort()
 
@@ -661,7 +680,7 @@ Func _EvenBetterCCPort($ByPassAC = False)
 
 	_LogAdd("EvenBetterCC: CC erfolgreich gestartet.")
 
-	WinWait("Login")
+	WinWait("Login", "", 30)
 
 	_LogAdd("EvenBetterCC: CC Login gefunden...")
 
@@ -675,7 +694,7 @@ Func _EvenBetterCCPort($ByPassAC = False)
 	_LogAdd("EvenBetterCC: CC Logindaten eingegeben...")
 	_LogAdd("EvenBetterCC: Warte auf das Fenster CC Launcher 3.0...")
 
-	WinWait("CC Launcher 3.0", "", 10)
+	WinWait("CC Launcher 3.0", "", 30)
 
 	$logincheck = _ExistsCC()
 
