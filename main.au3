@@ -32,6 +32,7 @@ $screenshot = 0
 $logopenonstart = 1
 $tol = 100
 $ccpath = 0
+$cclog = 0
 $ccusr = 0
 $ccpsw = 0
 $EvenBetterCCPort = 1
@@ -73,7 +74,6 @@ local $runtime = False
 local $debug = False
 local $erno = 0
 local $force = False
-local $lastHWND = _NowCalc()
 
 If _Singleton("Log", 1) == 0 Then
 	MsgBox($MB_SYSTEMMODAL, "CCme", "CCme Bereits gestartet.", 15)
@@ -82,6 +82,15 @@ EndIf
 
 If FileExists(@WorkingDir & "\debug.true") Then
 	$debug = True
+EndIf
+
+If (FileExists(@WorkingDir & "\log.txt")) Then
+	FileOpen(@WorkingDir & "\log.txt")
+	FileWriteLine(@WorkingDir & "\log.txt", "#######################################")
+	FileWriteLine(@WorkingDir & "\log.txt", "Programm Start")
+	FileWriteLine(@WorkingDir & "\log.txt", _NowDate() & " - " & _NowTime())
+	FileWriteLine(@WorkingDir & "\log.txt", "#######################################")
+	FileClose(@WorkingDir & "\log.txt")
 EndIf
 
 _LogAdd("Programm gestartet.")
@@ -153,6 +162,7 @@ Func _CheckIni()
 		$logopenonstart = IniRead("config.ini", "Settings", "logopenonstart", "1")
 		$tol = IniRead("config.ini", "Settings", "toleranz", "100")
 		$ccpath = IniRead("config.ini", "CCInfo", "CC_Pfad", "0")
+		$cclog = IniRead("config.ini", "CCInfo", "CC_Log", "0")
 		$ccusr = IniRead("config.ini", "CCInfo", "CC_Nutzername", "0")
 		$ccpsw = IniRead("config.ini", "CCInfo", "CC_Passwort", "0")
 		$EvenBetterCCPort = IniRead("config.ini", "Funktionen", "EvenBetterCCPort", "1")
@@ -165,6 +175,7 @@ Func _CheckIni()
 		IniWrite("config.ini", "Settings", "logopenonstart", 1)
 		IniWrite("config.ini", "Settings", "toleranz", 100)
 		IniWrite("config.ini", "CCInfo", "CC_Pfad", 0)
+		IniWrite("config.ini", "CCInfo", "CC_Log", 0)
 		IniWrite("config.ini", "CCInfo", "CC_Nutzername", 0)
 		IniWrite("config.ini", "CCInfo", "CC_Passwort", 0)
 		IniWrite("config.ini", "Funktionen", "EvenBetterCCPort", 1)
@@ -189,6 +200,22 @@ Func _CheckIni()
 
 	If $tol < 0 Or $tol > 255 Then
 		$tol = 100
+	EndIf
+
+	If Not FileExists($ccpath) Then
+		$ccpath = 0
+	EndIf
+
+	If Not FileExists($cclog) Then
+		$cclog = 0
+	EndIf
+
+	If $ccusr == "" Or $ccusr == Null Then
+		$ccusr = 0
+	EndIf
+
+	If $ccpsw == "" Or $ccpsw == Null Then
+		$ccpsw = 0
 	EndIf
 EndFunc
 
@@ -234,7 +261,8 @@ EndFunc
 
 Func _OnExit()
 	_opt(True)
-	Sleep(2100)
+	_LogAdd("Programm wird durch Benutzer beendet. Routine wird gestoppt und aufgeräumt.")
+	Sleep(6000)
 	If $screenshot == "0" Then
 		_ClearTemp(@WorkingDir & "\temp\")
 	EndIf
@@ -254,6 +282,7 @@ Func _opt($ForceOff = False)
 		GUICtrlSetData($Button1, "Start")
 		$runtime = False
 	Else
+		_CheckIni()
 		TrayItemSetText($tr_opt, "Stop")
 		GUICtrlSetData($Button1, "Stop")
 		$runtime = True
@@ -292,10 +321,31 @@ Func _GetScreenShot($hwnd, $fname)
 	Return $r
 EndFunc
 
-Func _AwayCheck()
+Func _AwayCheck($timeout = 5, $tickrate = 500)
 	$lastpos = MouseGetPos()
-	Sleep(5000)
 	$newpos = MouseGetPos()
+
+	If ($timeout < 1) Then
+		$timeout = 1
+	EndIf
+
+	If ($tickrate < 250) Then
+		$tickrate = 250
+	EndIf
+	
+	If ($tickrate > $timeout*1000) Then
+		$tickrate = $timeout*1000
+	EndIf
+
+	$x = Ceiling((($timeout*1000) / $tickrate))
+	$i = 0
+
+	While ($i <= $x And ($lastpos[0] == $newpos[0] And $lastpos[1] == $newpos[1]))
+		Sleep($tickrate)
+		$newpos = MouseGetPos()
+		$i += 1
+	WEnd
+
 	$r = False
 	If $lastpos[0] == $newpos[0] And $lastpos[1] == $newpos[1] Then
 		$r = True
@@ -318,6 +368,13 @@ Func _LogAdd($text)
 	If $text == "" Then
 		Return
 	EndIf
+
+	If (FileExists(@WorkingDir & "\log.txt")) Then
+		FileOpen(@WorkingDir & "\log.txt")
+		FileWriteLine(@WorkingDir & "\log.txt", _NowTime() & ": " & $text)
+		FileClose(@WorkingDir & "\log.txt")
+	EndIf
+
 	_GUICtrlListBox_InsertString($List1,_NowTime() & ": " & $text, -1)
 	_GUICtrlListBox_SetCurSel($List1,_GUICtrlListBox_GetCount($List1) - 1)
 EndFunc
@@ -327,13 +384,15 @@ Func _Run($hwndname)
 		_LogAdd("Programm: ComCave Launcher nicht gestartet. Warte auf Start...")
 
 		If $EvenBetterCCPort == 1 Then
-			$a = MsgBox(4, "CCMe", "ComCave Launcher nicht gestartet." & @CRLF & "Möchtest du den ComCave Launcher selbst starten?", 60)
-			If $a == 7 Then
-				_EvenBetterCCPort(True)
+			$a = MsgBox(4, "CCMe", "ComCave Launcher nicht gestartet." & @CRLF & "Möchtest du den ComCave Launcher selbst starten?" & @CRLF & "Nach 60 Sekunden Inaktivität wird CCLauncher gestartet.", 60)
+			If $a == 7 Or $a == -1 Then
+				If Not (_EvenBetterCCPort(True) == 1) Then
+					Return 0
+				EndIf
 			EndIf
 		EndIf
 
-		While(WinWait("CC Launcher 3.0", "", 2) == 0)
+		While(_WinWaitC("CC Launcher 3.0", 5, 1000) == 0)
 			If $runtime == False Then
 				_LogAdd("Programm: Durch Nutzer gestoppt.")
 				Return 0
@@ -346,24 +405,54 @@ Func _Run($hwndname)
 		_LogAdd("CCme gestartet. Warte auf Fenster " & $hwndname & "...")
 
 		_CheckIni()
+		$randtime = Random(120, 135, 1)
+		$lastCC = _NowCalc()
+		$lastCheck = $lastCC
+		$lastHWND = $lastCC
 		
-		While(WinWait($hwndname, "", 2) == 0)
+		While(_WinWaitC($hwndname, 5, 1000) == 0)
+			$now = _NowCalc()
+
 			If $runtime == False Then
 				_LogAdd("CCme: Durch Nutzer gestoppt.")
 				Return 0
 			EndIf
 
-			If _DateDiff("n", $lastHWND, _NowCalc()) >= 121 And $EvenBetterCCPort == 1 Then
+			If _DateDiff("n", $lastHWND, $now) >= $randtime And $EvenBetterCCPort == 1 Then
 				_LogAdd("CCme: Fenster seit 2 Stunden nicht gefunden.")
 				_LogAdd("CCme: Mit EvenBetterCC wird CCLauncher neu gestartet...")
 				_EvenBetterCCPort()
 				$lastHWND = _NowCalc()
 				Return 0
 			EndIf
+
+			If (WinExists("CC Launcher 3.0") == 0) Then
+				_LogAdd("CCme: CCLauncher nicht gestartet. Routine wird neugestartet.")
+				Return 0
+			EndIf
+
+			If _DateDiff("n", $lastCheck, $now) >= 3 Then
+				$lastCheck = $now
+				If _CheckCCLog($cclog) == 1 Then
+					If $debug Then
+						_LogAdd("DEBUG: PingCheck erfolgreich!")
+					EndIf
+					$lastCC = $now
+				EndIf
+			EndIf
+
+			If _DateDiff("n", $lastCC, $now) >= 10 And $EvenBetterCCPort == 1 Then
+				_LogAdd("CCme: CheckCCLog seit über 10 Minuten keinen Ping gelesen.")
+				_LogAdd("CCme: Mit EvenBetterCC wird CCLauncher neu gestartet...")
+				If _EvenBetterCCPort() == 1 Then
+					$lastCC = $now
+					Return 0
+				EndIf
+			EndIf
 		WEnd
 
 		_LogAdd("CCme: Fenster gefunden.")
-		$lastHWND = _NowCalc()
+		$lastHWND =_NowCalc()
 
 		$result = _CCme($hwndname)
 
@@ -385,19 +474,49 @@ Func _Run($hwndname)
 		_LogAdd("EvenBetterCC gestartet. Warte auf Fenster " & $hwndname & "...")
 
 		_CheckIni()
+		$randtime = Random(120, 122, 1)
+		$lastCC = _NowCalc()
+		$lastCheck = $lastCC
+		$lastHWND = $lastCC
 
-		While(WinWait($hwndname, "", 2) == 0)
+		While(_WinWaitC($hwndname, 5, 1000) == 0)
+			$now = _NowCalc()
+
 			If $runtime == False Then
 				_LogAdd("EvenBetterCC: Durch Nutzer gestoppt.")
 				Return 0
 			EndIf
 
-			If _DateDiff("n", $lastHWND, _NowCalc()) >= 121 And $EvenBetterCCPort == 1 Then
+			If _DateDiff("n", $lastHWND, $now) >= $randtime  Then
 				_LogAdd("EvenBetterCC: Fenster seit 2 Stunden nicht gefunden.")
 				_LogAdd("EvenBetterCC: Mit EvenBetterCC wird CCLauncher neu gestartet...")
 				_EvenBetterCCPort()
-				$lastHWND = _NowCalc()
+				$lastHWND = $now
 				Return 0
+			EndIf
+
+			If (WinExists("CC Launcher 3.0") == 0) Then
+				_LogAdd("EvenBetterCC: CCLauncher nicht gestartet. Routine wird neugestartet.")
+				Return 0
+			EndIf
+
+			If _DateDiff("n", $lastCheck, $now) >= 3 Then
+				$lastCheck = $now
+				If _CheckCCLog($cclog) == 1 Then
+					If $debug Then
+						_LogAdd("DEBUG: PingCheck erfolgreich!")
+					EndIf
+					$lastCC = $now
+				EndIf
+			EndIf
+
+			If _DateDiff("n", $lastCC, $now) >= 10 And $EvenBetterCCPort == 1 Then
+				_LogAdd("EvenBetterCC: CheckCCLog seit über 10 Minuten keinen Ping gelesen.")
+				_LogAdd("EvenBetterCC: Mit EvenBetterCC wird CCLauncher neu gestartet...")
+				If _EvenBetterCCPort() == 1 Then
+					$lastCC = $now
+					Return 0
+				EndIf
 			EndIf
 		WEnd
 
@@ -447,11 +566,15 @@ Func _LoginCC()
 		Return 0
 	EndIf
 
+	Sleep(1000)
+
 	$cchwnd = _GetHWND("Login")
 
 	If $cchwnd == False Then
 		Return 0
 	EndIf
+
+	Sleep(500)
 
 	Send($ccusr)
 	Sleep(500)
@@ -478,6 +601,58 @@ Func _ExistsCC()
 	Return $value
 EndFunc
 
+Func _WinWaitC($hwndname, $timeout = 1, $tickrate = 500)
+	If ($hwndname == "") Then
+		Return -1
+	EndIf
+
+	If ($timeout < 1) Then
+		$timeout = 1
+	EndIf
+
+	If ($tickrate < 250) Then
+		$tickrate = 250
+	EndIf
+	
+	If ($tickrate > $timeout*1000) Then
+		$tickrate = $timeout*1000
+	EndIf
+
+	$x = Ceiling((($timeout*1000) / $tickrate))
+	$i = 0
+
+	While ($i <= $x And Not (WinExists($hwndname)))
+		Sleep($tickrate)
+		$i += 1
+	WEnd
+
+	$r = 0
+	If (WinExists($hwndname)) Then
+		$r = 1
+	EndIf
+
+	Return $r
+EndFunc
+
+Func _CheckCCLog($logpath)
+	If $logpath == "" Or $logpath == Null Or $logpath == 0 Then
+		Return 1
+	EndIf
+
+	$x = 0
+	$iLines = _FileCountLines($logpath)
+	For $i = 0 to 5 Step +1
+		If ($iLines - $i > 0) Then
+			If Not (StringInStr(FileReadLine($logpath, $iLines - $i), "Ping erfolgreich") == 0) Then
+				$x = 1
+				ExitLoop
+			EndIf
+		EndIf
+	Next
+
+	Return $x
+EndFunc
+
 Func _CCme($hwndname, $ByPassAC = False)
 	If $runtime == False Then
 		_LogAdd("CCme: Durch Nutzer gestoppt.")
@@ -487,26 +662,34 @@ Func _CCme($hwndname, $ByPassAC = False)
 	$ac = True
 
 	If Not ($ByPassAC) Then
+		_LogAdd("CCme: Anwesenheit wird geprüft.")
 		$ac = _AwayCheck()
 	EndIf
 
 	$i = 0
 	While $ac == False
+		_LogAdd("CCme: Nutzer Bewegung erkannt. Warten...")
+		Sleep(3000)
 		$ac = _AwayCheck()
 		$i += 1
-		If $i >= 2 Then
+		If $i >= 3 Then
 			$a = MsgBox(4, "CCMe", "Nutzer Bewegung erkannt." & @CRLF & "Möchtest du die Eingabe selbst vornehmen?", 60)
 			If($a == 6) Then
 				Sleep(60000)
+				_LogAdd("CCme: Nutzer möchte Eingabe selbst durchführen.")
 				Return 0
 			Else
+				_LogAdd("CCme: Programm führt Eingabe durch.")
 				Sleep(1000)
 				$ac = True
 			EndIf
 		EndIf
 	WEnd
 
-	_LogAdd("CCme: Anwesenheit wurde geprüft.")
+	If (WinExists($hwndname) == 0) Then
+		_LogAdd("CCme: Fenster konnte nach Anwesenheitsprüfung nicht gefunden werden.")
+		Return 0
+	EndIf
 
 	$hwnd = _GetHWND($hwndname)
 
@@ -547,6 +730,11 @@ Func _CCme($hwndname, $ByPassAC = False)
 	If StringLen($numbers) < 4 Then
 		_LogAdd("CCme: Es wurden weniger als 4 Zahlen gelesen. ABBRUCH.")
 		Return -1
+	EndIf
+
+	If $runtime == False Then
+		_LogAdd("CCme: Durch Nutzer gestoppt.")
+		Return 0
 	EndIf
 
 	_LogAdd("CCme: Ausgelesen Zahlen sind: " & $numbers & ".")
@@ -631,26 +819,29 @@ Func _EvenBetterCCPort($ByPassAC = False)
 	$ac = True
 
 	If Not ($ByPassAC) Then
+		_LogAdd("EvenBetterCC: Anwesenheit wird geprüft.")
 		$ac = _AwayCheck()
 	EndIf
 
 	$i = 0
 	While $ac == False
+		_LogAdd("EvenBetterCC: Nutzer Bewegung erkannt. Warten...")
+		Sleep(3000)
 		$ac = _AwayCheck()
 		$i += 1
-		If $i >= 2 Then
-			$a = MsgBox(4, "CCMe", "Nutzer Bewegung erkannt." & @CRLF & "Möchtest du die Eingabe selbst vornehmen?", 60)
+		If $i >= 3 Then
+			$a = MsgBox(4, "EvenBetterCC", "Nutzer Bewegung erkannt." & @CRLF & "Möchtest du die Eingabe selbst vornehmen?", 60)
 			If($a == 6) Then
 				Sleep(60000)
+				_LogAdd("EvenBetterCC: Nutzer möchte Eingabe selbst durchführen.")
 				Return 0
 			Else
+				_LogAdd("EvenBetterCC: Programm führt Eingabe durch.")
 				Sleep(1000)
 				$ac = True
 			EndIf
 		EndIf
 	WEnd
-
-	_LogAdd("EvenBetterCC: Anwesenheit wurde geprüft.")
 
 	While (WinExists("Login") Or WinExists("CC Launcher 3.0"))
 		_LogAdd("EvenBetterCC: CC wird beendet.")
@@ -669,6 +860,11 @@ Func _EvenBetterCCPort($ByPassAC = False)
 		EndIf
 	WEnd
 
+	If $runtime == False Then
+		_LogAdd("EvenBetterCC: Durch Nutzer gestoppt.")
+		Return 0
+	EndIf
+
 	_LogAdd("EvenBetterCC: CC ist beendet.")
 
 	$start = _StartCC()
@@ -680,7 +876,10 @@ Func _EvenBetterCCPort($ByPassAC = False)
 
 	_LogAdd("EvenBetterCC: CC erfolgreich gestartet.")
 
-	WinWait("Login", "", 30)
+	If _WinWaitC("Login", 60, 1000) == 0 Then
+		_LogAdd("EvenBetterCC: Fehler beim starten von CC.")
+		Return -1
+	EndIf
 
 	_LogAdd("EvenBetterCC: CC Login gefunden...")
 
@@ -694,7 +893,12 @@ Func _EvenBetterCCPort($ByPassAC = False)
 	_LogAdd("EvenBetterCC: CC Logindaten eingegeben...")
 	_LogAdd("EvenBetterCC: Warte auf das Fenster CC Launcher 3.0...")
 
-	WinWait("CC Launcher 3.0", "", 30)
+	_WinWaitC("CC Launcher 3.0", 60, 1000)
+
+	If $runtime == False Then
+		_LogAdd("EvenBetterCC: Durch Nutzer gestoppt.")
+		Return 0
+	EndIf
 
 	$logincheck = _ExistsCC()
 
