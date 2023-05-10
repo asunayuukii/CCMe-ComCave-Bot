@@ -1,4 +1,4 @@
-# CCMe-ComCave-Bot v2.0
+# CCMe-ComCave-Bot v2.1
 **[German Only]** CCMe ist ein Bot der für dich die Anwesenheitskontrolle löst.
 Dies macht er indem er mit OCR das Fenster scannt und den Pin ausließt.
 Danach sucht er via Imagesearch die für ihn relevanten Tasten und gibt den Pin mit MouseMove ein.
@@ -28,6 +28,10 @@ Das Programm versucht dennoch bei wiederholten Fehlern die andere Methoden mit z
 Sobald der Bot 3x einen Programmfehler zählt, zum beispiel es konnten nur 3 Zahlen von der PIN eingelesen werden, dann wird mit EvenBetterComCave versucht die Anwesenheitskontrolle zu umgehen. Dies macht der Bot nur wenn EvenBetterComCave, in der `Config.ini`, aktiviert ist.
 Natürlich wird erst überprüft ob auch die Logindaten angegeben sind. Die Ausfallsicherung funktioniert auch in die andere Richtung, sprich wenn CCMe aus ist und EvenBetterComCave Fehler generiert wird die Methode CCMe erzwungen.
 
+**Was ist CheckLog / CC_Log?**
+
+Ihr kennt ja auch die Ausfälle des CCLaunchers. Mit Checklog überprüft CCMe die Log Datei vom ComCave Launcher alle 3 Minuten und liest die letzten 5 Zeilen aus. Wenn er nach 10 Minuten keine Zeile liest mit dem Inhalt "Ping erfolgreich" wird mit EvenbetterComCave der Launcher neugestartet. Um die Funktion zu verwenden muss der Pfad zur Log Datei in der Config.ini angegeben werden unter `[CCInfo] -> CC_Log=C:\Pfad\zum\Log\app.log`. Üblicherweise befindet sich die Log Datei unter `Laufwerk C -> Benutzer -> dein Benutzername -> CC_Launcher_Client -> .controlgui -> logs -> app.log`
+
 Der Bot arbeitet komplett Offline. Wenn du mir nicht traust schau dir den Code an und kompelliere ihn selbst.
 
 **Installation:**
@@ -45,7 +49,8 @@ Die Config hat folgende Einstellungen:
 |**Screenshot**|Wenn Screenshot aktiviert ist werden beim beenden des Bots nicht mehr die Bilder gelöscht. Standardwert ist 0 (1 gleich an / 0 gleich aus)*|
 |**LogOpenOnStart**|Öffnet direkt das Log Fenster wenn der Bot startet. Sonst muss man rechte Maustaste auf das Tray Symbol klicken und dort dann "Log" auswählen. Standardwert ist 1 (1 gleich an / 0 gleich aus)*|
 |**Toleranz**|Dieser Wert geht zwischen 0 und 255. Dieser beschreibt wie weit bei Imagesearch die Bilder unterschiedlich sein dürfen. 100 ist der Standardwert aber ihr dürft natürlich gerne mit diesem Wert spielen.|
-|**CC_Pfad**|Der Speicher Ort für den ComCaveLauncher. Dieser Wert muss angegeben werden wenn du EvenBetterComCave nutzen möchtest. Standardwert ist 0.|
+|**CC_Pfad**|Der Speicher Ort für den ComCaveLauncher. Dieser Wert muss angegeben werden wenn du EvenBetterComCave Funktion nutzen möchtest. Standardwert ist 0.|
+|**CC_Log**|Der Pfad zur CC Log Datei. Dieser Wert muss angegeben werden wenn du CheckLog Funktion nutzen möchtest. Standardwert ist 0.|
 |**CC_Nutzername**|Dein Nutzername für den ComCaveLauncher. Dieser Wert muss angegeben werden wenn du EvenBetterComCave nutzen möchtest. Standardwert ist 0.|
 |**CC_Passwort**|Dein Passwort für den ComCaveLauncher. Dieser Wert muss angegeben werden wenn du EvenBetterComCave nutzen möchtest. Standardwert ist 0.|
 |**EvenBetterCCPort**|Muss 1 sein wenn du diese Funktion nutzen möchtest. Standardwert ist 1. (1 gleich an / 0 gleich aus)*|
