@@ -668,6 +668,10 @@ Func _CCme($hwndname, $ByPassAC = False)
 
 	$i = 0
 	While $ac == False
+		If $runtime == False Then
+			_LogAdd("CCme: Durch Nutzer gestoppt.")
+			Return 0
+		EndIf
 		_LogAdd("CCme: Nutzer Bewegung erkannt. Warten...")
 		Sleep(3000)
 		$ac = _AwayCheck()
@@ -825,6 +829,10 @@ Func _EvenBetterCCPort($ByPassAC = False)
 
 	$i = 0
 	While $ac == False
+		If $runtime == False Then
+			_LogAdd("CCme: Durch Nutzer gestoppt.")
+			Return 0
+		EndIf
 		_LogAdd("EvenBetterCC: Nutzer Bewegung erkannt. Warten...")
 		Sleep(3000)
 		$ac = _AwayCheck()
