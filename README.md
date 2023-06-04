@@ -1,5 +1,8 @@
 # CCMe-ComCave-Bot v2.1
-**[German Only]** CCMe ist ein Bot der für dich die Anwesenheitskontrolle löst.
+**[German Only]** 
+# Comcave nutzt eine neue Zeiterfassung.
+# Hier findet ihr die neue Lösung: https://github.com/asunayuukii/CCLogMeOut
+CCMe ist ein Bot der für dich die Anwesenheitskontrolle löst.
 Dies macht er indem er mit OCR das Fenster scannt und den Pin ausließt.
 Danach sucht er via Imagesearch die für ihn relevanten Tasten und gibt den Pin mit MouseMove ein.
 
